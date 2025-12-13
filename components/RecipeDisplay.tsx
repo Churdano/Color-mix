@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MixingRecipe } from '../types';
 
 interface RecipeDisplayProps {
@@ -7,6 +7,33 @@ interface RecipeDisplayProps {
 }
 
 const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
+  // Factor de escala para las proporciones (1 = receta original)
+  const [scaleFactor, setScaleFactor] = useState(1);
+
+  // Reiniciar la escala cuando cambia la receta (nueva generación)
+  useEffect(() => {
+    if (recipe) {
+      setScaleFactor(1);
+    }
+  }, [recipe]);
+
+  const handleDropsChange = (index: number, newAmountStr: string) => {
+    if (!recipe) return;
+
+    const newAmount = parseFloat(newAmountStr);
+    if (isNaN(newAmount) || newAmount < 0) return;
+
+    // Obtenemos la cantidad base original de este item
+    const baseDrops = recipe.items[index].drops;
+    
+    // Si la base es 0, no podemos escalar (evitar división por cero)
+    if (baseDrops === 0) return;
+
+    // Calculamos el nuevo factor de escala basado en el cambio
+    const newScaleFactor = newAmount / baseDrops;
+    setScaleFactor(newScaleFactor);
+  };
+
   if (loading) {
     return (
       <div className="w-full p-8 text-center animate-pulse">
@@ -60,23 +87,48 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
 
         {/* Drops List */}
         <div>
-            <h3 className="text-gray-300 text-sm uppercase tracking-wider font-semibold mb-4 border-b border-gray-700 pb-2">Proporciones (Gotas)</h3>
+            <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+              <h3 className="text-gray-300 text-sm uppercase tracking-wider font-semibold">Proporciones</h3>
+              <button 
+                onClick={() => setScaleFactor(1)} 
+                className="text-xs text-indigo-400 hover:text-indigo-300 underline"
+                title="Volver a las gotas originales"
+              >
+                Restaurar original
+              </button>
+            </div>
+            
             <ul className="space-y-3">
-                {recipe.items.map((item, idx) => (
-                    <li key={idx} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
-                        <div className="flex flex-col">
-                            <span className="text-white font-medium">{item.paintName}</span>
-                            <span className="text-xs text-indigo-300">{item.brand}</span>
-                        </div>
-                        <div className="flex items-center">
-                             <div className="bg-indigo-600 text-white font-bold text-lg w-8 h-8 rounded-full flex items-center justify-center shadow">
-                                {item.drops}
-                             </div>
-                             <span className="ml-2 text-xs text-gray-400">gotas</span>
-                        </div>
-                    </li>
-                ))}
+                {recipe.items.map((item, idx) => {
+                    // Calculamos las gotas actuales basadas en la escala
+                    const currentDrops = item.drops * scaleFactor;
+                    // Redondeamos para visualización (1 decimal max)
+                    const displayDrops = parseFloat(currentDrops.toFixed(1));
+
+                    return (
+                      <li key={idx} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                          <div className="flex flex-col flex-grow mr-4">
+                              <span className="text-white font-medium">{item.paintName}</span>
+                              <span className="text-xs text-indigo-300">{item.brand}</span>
+                          </div>
+                          <div className="flex items-center bg-gray-800 rounded-lg p-1 border border-gray-600">
+                               <input 
+                                  type="number"
+                                  min="0"
+                                  step="0.1"
+                                  value={displayDrops}
+                                  onChange={(e) => handleDropsChange(idx, e.target.value)}
+                                  className="bg-transparent text-white font-bold text-center w-12 outline-none appearance-none"
+                               />
+                               <span className="text-xs text-gray-500 px-1 select-none">gotas</span>
+                          </div>
+                      </li>
+                    );
+                })}
             </ul>
+            <p className="text-[10px] text-gray-500 mt-2 text-right italic">
+              * Modifica un valor y los demás se ajustarán proporcionalmente.
+            </p>
         </div>
       </div>
 
