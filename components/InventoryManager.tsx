@@ -105,78 +105,76 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
   };
 
   return (
-    <div className="w-full bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+    <div className="glass-panel rounded-2xl overflow-hidden shadow-2xl transition-all duration-300">
         <button 
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full p-4 flex justify-between items-center bg-gray-800 hover:bg-gray-750 transition-colors focus:outline-none"
+            className="w-full p-5 flex justify-between items-center bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:bg-gray-800/70 transition-colors focus:outline-none group"
         >
-            <div className="flex items-center space-x-3">
-                <div className="bg-indigo-600 p-2 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <div className="flex items-center space-x-4">
+                <div className={`p-3 rounded-xl transition-all duration-300 ${inventory.length > 0 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-700 text-gray-400'}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
                     </svg>
                 </div>
                 <div className="text-left">
-                    <h2 className="text-lg font-bold text-white">Mis Pinturas</h2>
-                    <p className="text-xs text-gray-400">
+                    <h2 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">Mis Pinturas</h2>
+                    <p className="text-sm text-gray-400">
                         {inventory.length > 0 
-                            ? `${inventory.length} colores seleccionados` 
-                            : 'Selecciona las pinturas que tienes'}
+                            ? <span className="text-green-400 font-medium">{inventory.length} colores disponibles</span>
+                            : 'Define tu paleta disponible'}
                     </p>
                 </div>
             </div>
             <div className="flex items-center">
-                <div className="flex -space-x-2 mr-4 overflow-hidden">
+                <div className="flex -space-x-2 mr-5 overflow-hidden">
                     {inventory.slice(0, 5).map(p => (
-                        <div key={p.id} className="w-6 h-6 rounded-full border border-gray-600" style={{backgroundColor: p.hex || '#ccc'}}></div>
+                        <div key={p.id} className="w-8 h-8 rounded-full border-2 border-gray-800 shadow-md transform hover:scale-110 transition-transform z-0 hover:z-10" style={{backgroundColor: p.hex || '#ccc'}}></div>
                     ))}
                     {inventory.length > 5 && (
-                        <div className="w-6 h-6 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center text-[10px] text-white">
+                        <div className="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center text-[10px] font-bold text-white shadow-md z-10">
                             +{inventory.length - 5}
                         </div>
                     )}
                 </div>
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-5 w-5 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <div className={`bg-gray-700/50 p-2 rounded-full transition-transform duration-300 ${isOpen ? 'rotate-180 bg-gray-600' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </div>
         </button>
 
       {isOpen && (
-        <div className="border-t border-gray-700 bg-gray-900/50 flex flex-col">
+        <div className="border-t border-white/5 bg-black/20 flex flex-col animate-fade-in-up">
           
           {/* Brand Tabs */}
-          <div className="flex overflow-x-auto border-b border-gray-700 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-white/5 scrollbar-hide bg-black/10">
             {BRANDS.map(brand => (
                 <button
                     key={brand}
                     type="button"
                     onClick={() => handleTabChange(brand)}
                     className={`
-                        px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative focus:outline-none
-                        ${activeBrandTab === brand ? 'text-white' : 'text-gray-400 hover:text-gray-200'}
+                        px-5 py-4 text-sm font-semibold whitespace-nowrap transition-all relative focus:outline-none
+                        ${activeBrandTab === brand ? 'text-white bg-white/5' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}
                     `}
                 >
                     {brand}
                     {activeBrandTab === brand && (
-                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></span>
+                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
                     )}
                 </button>
             ))}
           </div>
 
-          <div className="p-4">
+          <div className="p-5">
              {/* Calibration Mode Toggle */}
              {activeBrandTab !== 'Other' && !isCalibrating && (
-                <div className="mb-4 flex justify-end">
+                <div className="mb-5 flex justify-end">
                     <button 
                         onClick={() => setIsCalibrating(true)}
-                        className="text-xs flex items-center space-x-1 text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-full hover:bg-indigo-500/10 transition-colors"
+                        className="text-xs flex items-center space-x-2 text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 px-4 py-2 rounded-lg transition-all"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
@@ -196,12 +194,12 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
              ) : (
                 <>
                     {/* Toolbar: Search & Clear Actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         {/* Search Input */}
                         {activeBrandTab !== 'Other' ? (
-                            <div className="relative flex-grow">
+                            <div className="relative flex-grow group">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                                     </svg>
                                 </div>
@@ -210,13 +208,13 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                                     placeholder={`Buscar en ${activeBrandTab}...`}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm text-white placeholder-gray-400 outline-none"
+                                    className="w-full pl-10 pr-10 py-2.5 bg-black/20 border border-gray-600/50 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-sm text-white placeholder-gray-500 outline-none transition-all hover:bg-black/30"
                                 />
                                 {searchQuery && (
                                     <button 
                                         type="button"
                                         onClick={() => setSearchQuery('')}
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-white transition-colors"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -224,25 +222,25 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                                     </button>
                                 )}
                             </div>
-                        ) : <div className="flex-grow text-sm text-gray-400">Pinturas personalizadas</div>}
+                        ) : <div className="flex-grow text-sm text-gray-400 italic">Pinturas personalizadas</div>}
 
-                        {/* Delete All Button (Changed to Inline Confirmation) */}
+                        {/* Delete All Button */}
                         {inventory.length > 0 && (
                             <div className="flex-shrink-0">
                                 {confirmingClear ? (
-                                    <div className="flex items-center space-x-2 animate-fade-in">
-                                        <span className="text-xs text-red-300 font-medium">¿Borrar todo?</span>
+                                    <div className="flex items-center space-x-2 animate-fade-in p-1 bg-red-900/20 rounded-lg border border-red-500/20">
+                                        <span className="text-xs text-red-300 font-medium pl-2">¿Borrar?</span>
                                         <button
                                             type="button"
                                             onClick={confirmClear}
-                                            className="px-2 py-1.5 rounded bg-red-600 text-white hover:bg-red-700 text-xs font-bold uppercase transition-colors shadow-sm"
+                                            className="px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-500 text-xs font-bold uppercase transition-colors shadow-lg shadow-red-900/50"
                                         >
                                             Sí
                                         </button>
                                         <button
                                             type="button"
                                             onClick={cancelClear}
-                                            className="px-2 py-1.5 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 text-xs font-medium uppercase transition-colors"
+                                            className="px-3 py-1.5 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 text-xs font-medium uppercase transition-colors"
                                         >
                                             No
                                         </button>
@@ -251,12 +249,12 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                                     <button
                                         type="button"
                                         onClick={handleClearClick}
-                                        className="flex items-center justify-center space-x-1 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-xs font-semibold uppercase tracking-wide"
+                                        className="flex items-center justify-center space-x-1 px-4 py-2.5 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-xs font-bold uppercase tracking-wide"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
-                                        <span>Borrar Todo</span>
+                                        <span>Vaciar</span>
                                     </button>
                                 )}
                             </div>
@@ -274,71 +272,79 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                                         type="button"
                                         onClick={() => togglePaint(paint)}
                                         className={`
-                                            flex items-center p-2 rounded-lg border transition-all group focus:outline-none
+                                            flex items-center p-2.5 rounded-xl border transition-all duration-200 group focus:outline-none relative overflow-hidden
                                             ${isSelected 
-                                                ? 'bg-indigo-900/40 border-indigo-500/50 shadow-[0_0_10px_rgba(99,102,241,0.2)]' 
-                                                : 'bg-gray-800 border-gray-700 hover:border-gray-500'
+                                                ? 'bg-indigo-900/30 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.15)]' 
+                                                : 'bg-white/5 border-transparent hover:border-gray-600 hover:bg-white/10'
                                             }
                                         `}
                                     >
+                                        {isSelected && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none"></div>
+                                        )}
+                                        
                                         <div 
-                                            className="w-8 h-8 rounded-full border border-gray-600 shadow-sm flex-shrink-0 mr-3" 
+                                            className={`w-9 h-9 rounded-full border border-gray-600 shadow-sm flex-shrink-0 mr-3 transition-transform duration-300 ${isSelected ? 'scale-110 border-indigo-400' : 'group-hover:scale-105'}`} 
                                             style={{backgroundColor: paint.hex}}
                                         >
                                             {isSelected && (
-                                                <div className="w-full h-full flex items-center justify-center bg-black/20 rounded-full">
-                                                    <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="w-full h-full flex items-center justify-center bg-black/20 rounded-full animate-fade-in">
+                                                    <svg className="w-5 h-5 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="text-left overflow-hidden">
-                                            <p className={`text-sm truncate ${isSelected ? 'text-white font-medium' : 'text-gray-300'}`}>
+                                        <div className="text-left overflow-hidden relative z-10">
+                                            <p className={`text-sm truncate transition-colors ${isSelected ? 'text-white font-semibold' : 'text-gray-300 group-hover:text-white'}`}>
                                                 {paint.name}
                                             </p>
-                                            <p className="text-[10px] text-gray-500 truncate">{paint.id}</p>
+                                            <p className={`text-[10px] truncate transition-colors ${isSelected ? 'text-indigo-300' : 'text-gray-500'}`}>{paint.id}</p>
                                         </div>
                                     </button>
                                 );
                             })}
                             {filteredPaints.length === 0 && (
-                                <p className="col-span-full text-center text-gray-500 py-4 text-sm">
+                                <p className="col-span-full text-center text-gray-500 py-8 text-sm italic">
                                     {searchQuery ? 'No se encontraron pinturas con ese código/nombre.' : 'No hay colores predefinidos para esta marca.'}
                                 </p>
                             )}
                         </div>
                     ) : (
-                        <div className="text-center text-gray-400 text-sm py-4">
+                        <div className="text-center text-gray-400 text-sm py-8 bg-black/20 rounded-xl border border-white/5 border-dashed">
                             Usa la sección de abajo para agregar pinturas de otras marcas manualmente.
                         </div>
                     )}
 
                     {/* Manual Add Section */}
-                    <div className="mt-6 pt-4 border-t border-gray-700">
-                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                    <div className="mt-6 pt-5 border-t border-white/5">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
                             Añadir Manualmente a "{activeBrandTab}"
                         </h4>
-                        <div className="flex items-center gap-2">
-                            <input 
-                                type="color" 
-                                value={customHex}
-                                onChange={(e) => setCustomHex(e.target.value)}
-                                className="w-10 h-10 rounded border-none bg-transparent cursor-pointer"
-                                title="Selecciona el color aproximado"
-                            />
+                        <div className="flex items-center gap-3">
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-indigo-500 blur-sm opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
+                                <input 
+                                    type="color" 
+                                    value={customHex}
+                                    onChange={(e) => setCustomHex(e.target.value)}
+                                    className="relative w-11 h-11 rounded-lg border-2 border-gray-600 cursor-pointer bg-transparent"
+                                    title="Selecciona el color aproximado"
+                                />
+                            </div>
                             <input
                                 type="text"
                                 value={customName}
                                 onChange={(e) => setCustomName(e.target.value)}
                                 placeholder="Nombre de la pintura..."
-                                className="bg-gray-700 text-white rounded px-3 py-2 text-sm flex-grow outline-none border border-gray-600 focus:border-indigo-500 placeholder-gray-500"
+                                className="bg-black/20 text-white rounded-lg px-4 py-2.5 text-sm flex-grow outline-none border border-gray-600 focus:border-indigo-500 focus:bg-black/30 placeholder-gray-500 transition-all"
                                 onKeyDown={(e) => e.key === 'Enter' && addCustomPaint()}
                             />
                             <button
                                 type="button"
                                 onClick={addCustomPaint}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-lg shadow-indigo-900/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={!customName.trim()}
                             >
                                 Añadir
