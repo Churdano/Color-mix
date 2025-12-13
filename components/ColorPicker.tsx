@@ -69,7 +69,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    // Visual coordinates (relative to the DOM element)
+    // Visual coordinates (relative to the DOM element/Canvas)
     let visualX = clientX - rect.left;
     let visualY = clientY - rect.top;
 
@@ -182,53 +182,56 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
             <input id="image-reupload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
           </div>
 
-          <div 
-            className="relative touch-none select-none overflow-hidden rounded-xl shadow-2xl border border-gray-600/50 bg-black cursor-crosshair group w-full"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            <canvas
-              ref={canvasRef}
-              className="block max-w-full mx-auto"
-            />
-            
-            {/* Persisting Selection Marker (The "Sight") */}
-            {currentSelection && !isDragging && (
-                <div 
-                    className="absolute w-8 h-8 border-2 border-white rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 z-10 animate-pulse-glow"
-                    style={{ left: currentSelection.x, top: currentSelection.y }}
-                >
-                    <div className="w-full h-full border border-black rounded-full opacity-50"></div>
-                    <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 box-border border border-white"></div>
-                </div>
-            )}
-
-            {/* Offset Magnifier (Only while dragging) */}
-            {isDragging && currentSelection && (
-                <div 
-                    className="absolute rounded-full border-4 border-white shadow-2xl overflow-hidden pointer-events-none z-20 bg-gray-900"
-                    style={{ 
-                        width: MAGNIFIER_SIZE, 
-                        height: MAGNIFIER_SIZE,
-                        left: currentSelection.x - MAGNIFIER_SIZE / 2, 
-                        top: currentSelection.y - MAGNIFIER_OFFSET_Y - MAGNIFIER_SIZE / 2
-                    }}
-                >
-                    <canvas 
-                        ref={magnifierCanvasRef} 
-                        width={MAGNIFIER_SIZE} 
-                        height={MAGNIFIER_SIZE}
-                        className="block"
-                    />
-                    {/* Color code badge inside magnifier */}
-                    <div className="absolute bottom-2 left-0 right-0 text-center">
-                        <span className="bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold tracking-wider">
-                            {currentSelection.hex}
-                        </span>
+          <div className="w-full flex justify-center">
+            <div 
+                className="relative touch-none select-none rounded-xl shadow-2xl border border-gray-600/50 bg-black cursor-crosshair overflow-hidden"
+                style={{ width: 'fit-content', maxWidth: '100%' }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+            >
+                <canvas
+                ref={canvasRef}
+                className="block"
+                />
+                
+                {/* Persisting Selection Marker (The "Sight") */}
+                {currentSelection && !isDragging && (
+                    <div 
+                        className="absolute w-8 h-8 border-2 border-white rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 z-10 animate-pulse-glow"
+                        style={{ left: currentSelection.x, top: currentSelection.y }}
+                    >
+                        <div className="w-full h-full border border-black rounded-full opacity-50"></div>
+                        <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 box-border border border-white"></div>
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* Offset Magnifier (Only while dragging) */}
+                {isDragging && currentSelection && (
+                    <div 
+                        className="absolute rounded-full border-4 border-white shadow-2xl overflow-hidden pointer-events-none z-20 bg-gray-900"
+                        style={{ 
+                            width: MAGNIFIER_SIZE, 
+                            height: MAGNIFIER_SIZE,
+                            left: currentSelection.x - MAGNIFIER_SIZE / 2, 
+                            top: currentSelection.y - MAGNIFIER_OFFSET_Y - MAGNIFIER_SIZE / 2
+                        }}
+                    >
+                        <canvas 
+                            ref={magnifierCanvasRef} 
+                            width={MAGNIFIER_SIZE} 
+                            height={MAGNIFIER_SIZE}
+                            className="block"
+                        />
+                        {/* Color code badge inside magnifier */}
+                        <div className="absolute bottom-2 left-0 right-0 text-center">
+                            <span className="bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold tracking-wider">
+                                {currentSelection.hex}
+                            </span>
+                        </div>
+                    </div>
+                )}
+            </div>
           </div>
         </>
       )}
