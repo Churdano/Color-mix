@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { MixingRecipe } from '../types';
 
 interface RecipeDisplayProps {
   recipe: MixingRecipe | null;
   loading: boolean;
+  modelName: string;
 }
 
-const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
+const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading, modelName }) => {
   // Factor de escala para las proporciones (1 = receta original)
   const [scaleFactor, setScaleFactor] = useState(1);
 
@@ -46,7 +48,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
                 </svg>
             </div>
         </div>
-        <p className="text-indigo-200 text-lg font-medium">Analizando espectro de color...</p>
+        <p className="text-indigo-200 text-lg font-medium">Generando con {modelName}...</p>
         <p className="text-gray-500 text-xs mt-2">El alquimista está preparando la fórmula.</p>
       </div>
     );
@@ -56,7 +58,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
 
   return (
     <div className="glass-panel rounded-2xl overflow-hidden shadow-2xl mt-8 animate-fade-in-up">
-      <div className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 p-5 border-b border-white/10">
+      <div className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 p-5 border-b border-white/10 flex justify-between items-center">
         <h2 className="text-xl font-bold text-white flex items-center">
             <span className="p-2 bg-white/10 rounded-lg mr-3">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,6 +67,9 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, loading }) => {
             </span>
             Receta Maestra
         </h2>
+        <span className="text-[10px] bg-black/30 border border-white/10 px-2 py-1 rounded-full text-gray-400">
+            🤖 {modelName}
+        </span>
       </div>
       
       <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-10">

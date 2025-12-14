@@ -1,3 +1,4 @@
+
 export interface Paint {
   id: string;
   brand: string;
@@ -28,4 +29,20 @@ export interface PixelColor {
   hex: string;
   x: number;
   y: number;
+}
+
+export interface UserSettings {
+  provider: 'gemini' | 'openrouter';
+  openRouterApiKey?: string;
+  geminiApiKey?: string;
+  modelId: string;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  inventory: Paint[];
+  avatarColor: string; // Hex string for the avatar background
+  createdAt: number;
+  settings?: UserSettings;
 }
