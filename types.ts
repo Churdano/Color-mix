@@ -22,6 +22,12 @@ export interface MixingRecipe {
   matchAccuracy: number; // 0-100%
 }
 
+export interface RecipeHistoryItem {
+  id: string;
+  timestamp: number;
+  recipe: MixingRecipe;
+}
+
 export interface PixelColor {
   r: number;
   g: number;
@@ -45,4 +51,5 @@ export interface UserProfile {
   avatarColor: string; // Hex string for the avatar background
   createdAt: number;
   settings?: UserSettings;
+  history: RecipeHistoryItem[];
 }

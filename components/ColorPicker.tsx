@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { PixelColor } from '../types';
 
@@ -15,9 +16,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   // Constants for magnifier
-  const MAGNIFIER_SIZE = 100; // px diameter
+  const MAGNIFIER_SIZE = 120; // px diameter
   const MAGNIFIER_ZOOM = 3;
-  const MAGNIFIER_OFFSET_Y = 80; // Distance above finger
+  const MAGNIFIER_OFFSET_Y = 90; // Distance above finger
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,6 +113,11 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
           const sy = safeInternalY - (sHeight / 2);
 
           magCtx.imageSmoothingEnabled = false; // Keep pixels sharp
+          
+          // Draw fill background
+          magCtx.fillStyle = '#0c0a09';
+          magCtx.fillRect(0,0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
+          
           magCtx.drawImage(canvas, sx, sy, sWidth, sHeight, 0, 0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
           
           // Draw crosshair on magnifier
@@ -123,6 +129,11 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
           magCtx.moveTo(0, MAGNIFIER_SIZE/2);
           magCtx.lineTo(MAGNIFIER_SIZE, MAGNIFIER_SIZE/2);
           magCtx.stroke();
+          
+          // Outer Border
+          magCtx.strokeStyle = '#f97316'; // Orange border
+          magCtx.lineWidth = 4;
+          magCtx.strokeRect(0,0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
       }
     }
   };
@@ -150,15 +161,17 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
   return (
     <div className="w-full flex flex-col items-center space-y-6" ref={containerRef}>
       {!image && (
-        <div className="glass-panel w-full p-10 border-2 border-dashed border-gray-600/50 rounded-2xl text-center hover:border-indigo-500/50 hover:bg-white/5 transition-all group cursor-pointer">
+        <div 
+            className="glass-panel w-full p-10 border-2 border-dashed border-stone-600/50 rounded-2xl text-center hover:border-orange-500/50 hover:bg-white/5 transition-all group cursor-pointer"
+        >
           <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center">
-              <div className="bg-indigo-500/10 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="bg-orange-500/10 p-5 rounded-full mb-5 group-hover:scale-110 transition-transform duration-300 border border-orange-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-            <span className="text-lg font-bold text-white mb-1">Sube tu Imagen de Referencia</span>
-            <span className="text-sm text-gray-400">Toca para seleccionar desde tu dispositivo</span>
+            <span className="text-xl font-bold text-stone-200 mb-2">Cargar Referencia</span>
+            <span className="text-sm text-stone-500">Toca para subir una foto de tu miniatura o arte conceptual</span>
             <input
               id="image-upload"
               type="file"
@@ -173,8 +186,11 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
       {image && (
         <>
           <div className="w-full flex justify-end">
-            <label htmlFor="image-reupload" className="text-xs font-medium text-indigo-300 cursor-pointer hover:text-white flex items-center bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <label 
+                htmlFor="image-reupload" 
+                className="text-xs font-medium text-orange-300 cursor-pointer hover:text-white flex items-center bg-white/5 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/10 transition-all shadow-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Cambiar imagen
@@ -182,9 +198,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
             <input id="image-reupload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
           </div>
 
-          <div className="w-full flex justify-center">
+          <div className="w-full flex justify-center animate-fade-in-up">
             <div 
-                className="relative touch-none select-none rounded-xl shadow-2xl border border-gray-600/50 bg-black cursor-crosshair overflow-hidden"
+                className="relative touch-none select-none rounded-xl shadow-2xl border-4 border-stone-800 bg-stone-900 cursor-crosshair overflow-hidden ring-1 ring-white/10"
                 style={{ width: 'fit-content', maxWidth: '100%' }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
@@ -195,21 +211,21 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
                 className="block"
                 />
                 
-                {/* Persisting Selection Marker (The "Sight") */}
+                {/* Persisting Selection Marker */}
                 {currentSelection && !isDragging && (
                     <div 
-                        className="absolute w-8 h-8 border-2 border-white rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 z-10 animate-pulse-glow"
+                        className="absolute w-8 h-8 border-2 border-white rounded-full shadow-[0_0_15px_rgba(0,0,0,0.8)] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 z-10 animate-pulse-glow"
                         style={{ left: currentSelection.x, top: currentSelection.y }}
                     >
-                        <div className="w-full h-full border border-black rounded-full opacity-50"></div>
-                        <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 box-border border border-white"></div>
+                        <div className="w-full h-full border border-black rounded-full opacity-60"></div>
+                        <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-orange-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 box-border border border-white shadow-[0_0_5px_orange]"></div>
                     </div>
                 )}
 
-                {/* Offset Magnifier (Only while dragging) */}
+                {/* Offset Magnifier */}
                 {isDragging && currentSelection && (
                     <div 
-                        className="absolute rounded-full border-4 border-white shadow-2xl overflow-hidden pointer-events-none z-20 bg-gray-900"
+                        className="absolute rounded-full border-4 border-stone-200 shadow-[0_10px_30px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-none z-20 bg-stone-900"
                         style={{ 
                             width: MAGNIFIER_SIZE, 
                             height: MAGNIFIER_SIZE,
@@ -223,9 +239,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
                             height={MAGNIFIER_SIZE}
                             className="block"
                         />
-                        {/* Color code badge inside magnifier */}
-                        <div className="absolute bottom-2 left-0 right-0 text-center">
-                            <span className="bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold tracking-wider">
+                        {/* Color code badge */}
+                        <div className="absolute bottom-3 left-0 right-0 text-center">
+                            <span className="bg-stone-900/90 text-orange-200 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold tracking-wider border border-orange-500/30">
                                 {currentSelection.hex}
                             </span>
                         </div>
@@ -237,25 +253,35 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ onColorSelect }) => {
       )}
 
       {currentSelection && (
-        <div className="flex items-center space-x-5 p-5 glass-panel rounded-2xl w-full shadow-lg border border-white/10 animate-fade-in-up">
-          <div className="relative">
+        <div className="flex items-center space-x-6 p-6 glass-panel rounded-2xl w-full shadow-2xl border border-white/5 animate-fade-in-up">
+          <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
               <div
-                className="w-20 h-20 rounded-2xl border-4 border-white/10 shadow-inner flex-shrink-0"
+                className="relative w-24 h-24 rounded-2xl border-4 border-stone-800 shadow-inner flex-shrink-0"
                 style={{ backgroundColor: currentSelection.hex }}
               ></div>
-              <div className="absolute -bottom-2 -right-2 bg-gray-900 rounded-full p-1 border border-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+              <div className="absolute -bottom-3 -right-3 bg-stone-900 rounded-full p-1.5 border border-stone-700 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
           </div>
           <div className="flex-grow">
-            <p className="text-indigo-400 text-xs uppercase tracking-widest font-bold mb-1">Color Objetivo</p>
-            <p className="text-3xl font-black font-mono text-white tracking-wide drop-shadow-md">{currentSelection.hex}</p>
-            <div className="flex items-center space-x-2 mt-2">
-                <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-300 text-[10px] font-mono border border-red-500/30">R:{currentSelection.r}</span>
-                <span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-[10px] font-mono border border-green-500/30">G:{currentSelection.g}</span>
-                <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-mono border border-blue-500/30">B:{currentSelection.b}</span>
+            <p className="text-orange-400 text-xs uppercase tracking-widest font-bold mb-1">Color Objetivo Seleccionado</p>
+            <p className="text-4xl font-black font-mono text-white tracking-wide drop-shadow-md">{currentSelection.hex}</p>
+            <div className="flex items-center space-x-3 mt-3">
+                <div className="flex flex-col items-center">
+                    <span className="text-[10px] text-stone-500 mb-1">RED</span>
+                    <span className="px-2 py-1 rounded bg-stone-800 text-stone-300 text-xs font-mono min-w-[3rem] text-center border-b-2 border-red-500">{currentSelection.r}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                    <span className="text-[10px] text-stone-500 mb-1">GREEN</span>
+                    <span className="px-2 py-1 rounded bg-stone-800 text-stone-300 text-xs font-mono min-w-[3rem] text-center border-b-2 border-green-500">{currentSelection.g}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                    <span className="text-[10px] text-stone-500 mb-1">BLUE</span>
+                    <span className="px-2 py-1 rounded bg-stone-800 text-stone-300 text-xs font-mono min-w-[3rem] text-center border-b-2 border-blue-500">{currentSelection.b}</span>
+                </div>
             </div>
           </div>
         </div>

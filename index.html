@@ -1,25 +1,57 @@
+
 <!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ColorMix - Mezclador de Pintura para Miniaturas</title>
+    <title>ColorMix - Atelier de Pintura</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              stone: {
+                850: '#1c1917',
+                950: '#0c0a09',
+              },
+              art: {
+                red: '#D93838',    // Matching the red bottle
+                yellow: '#F2C029', // Matching the yellow bottle
+                blue: '#2B5BA6',   // Matching the blue bottle
+                wood: '#8C6A4B',   // Matching the brushes
+              }
+            },
+            animation: {
+              'float': 'float 8s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+          }
+        }
+      }
+    </script>
     <style>
-      /* Custom Scrollbar for a cleaner dark mode look */
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+      body {
+        font-family: 'Outfit', sans-serif;
+      }
+
+      /* Custom Scrollbar - Earthy Tone */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a; 
+        background: #1c1917; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #334155; 
+        background: #57534e; 
         border-radius: 4px;
+        border: 1px solid #1c1917;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
+        background: #a8a29e; 
       }
 
       /* Animations */
@@ -41,28 +73,41 @@
       }
 
       @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
-        50% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.6); }
+        0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.1); }
+        50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
       }
 
       .animate-fade-in-up {
-        animation: fadeInUp 0.6s ease-out forwards;
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
       .animate-float {
-        animation: float 6s ease-in-out infinite;
+        animation: float 8s ease-in-out infinite;
       }
 
       .animate-pulse-glow {
-        animation: pulse-glow 2s infinite;
+        animation: pulse-glow 3s infinite;
       }
 
-      /* Glassmorphism utility */
+      /* Warm Glassmorphism utility */
       .glass-panel {
-        background: rgba(30, 41, 59, 0.7);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(28, 25, 23, 0.75); /* Stone-900 with opacity */
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      }
+      
+      .glass-panel-light {
+        background: rgba(41, 37, 36, 0.6);
+        backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      /* Text selection color to match theme */
+      ::selection {
+        background: #f97316; /* Orange-500 */
+        color: white;
       }
     </style>
   <script type="importmap">
@@ -78,7 +123,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+  <body class="bg-stone-950 text-stone-100 antialiased overflow-x-hidden">
     <div id="root"></div>
   </body>
 </html>

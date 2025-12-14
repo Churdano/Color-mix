@@ -58,7 +58,14 @@ const callOpenRouter = async (apiKey: string, model: string, prompt: string): Pr
 
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.error?.message || `OpenRouter Error: ${response.statusText}`);
+            const errorMessage = err.error?.message || `OpenRouter Error: ${response.statusText}`;
+            
+            // Catch specific privacy error
+            if (errorMessage.includes("data policy") || errorMessage.includes("matching your data policy")) {
+                throw new Error("ERROR DE PRIVACIDAD: Los modelos gratuitos requieren habilitar el registro de datos en OpenRouter. Revisa la Configuración.");
+            }
+            
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -66,6 +73,10 @@ const callOpenRouter = async (apiKey: string, model: string, prompt: string): Pr
 
     } catch (error: any) {
         console.error("OpenRouter API Error:", error);
+        // If it was our custom error, rethrow it clean, otherwise generic
+        if (error.message.includes("ERROR DE PRIVACIDAD")) {
+             throw error;
+        }
         throw new Error(error.message || "Error conectando con OpenRouter");
     }
 };

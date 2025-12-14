@@ -37,7 +37,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
 
   const filteredModels = AI_MODELS.filter(m => m.provider === provider);
 
-  // If the currently selected model doesn't match the new provider, pick the first one
   useEffect(() => {
     const isModelValid = AI_MODELS.find(m => m.id === modelId && m.provider === provider);
     if (!isModelValid) {
@@ -47,19 +46,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
   }, [provider]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-gray-800 border border-gray-600 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/90 backdrop-blur-md animate-fade-in">
+      <div className="bg-stone-900 border border-stone-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ring-1 ring-white/10">
         
         {/* Header */}
-        <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-             </svg>
+        <div className="p-6 border-b border-stone-800 flex justify-between items-center bg-stone-900/50">
+          <h2 className="text-xl font-bold text-stone-100 flex items-center gap-3">
+             <div className="p-2 bg-stone-800 rounded-lg border border-stone-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+             </div>
              Configuración de IA
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-stone-500 hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -67,25 +68,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-6 overflow-y-auto space-y-8 bg-stone-900/80">
           
           {/* Provider Selection */}
-          <div className="space-y-3">
-             <label className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Proveedor de IA</label>
+          <div className="space-y-4">
+             <label className="text-xs font-bold text-stone-400 uppercase tracking-widest">Proveedor de IA</label>
              <div className="grid grid-cols-2 gap-4">
                 <button
                    onClick={() => setProvider('gemini')}
-                   className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all ${provider === 'gemini' ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-gray-700/30 border-gray-600 text-gray-400 hover:bg-gray-700/50'}`}
+                   className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all ${provider === 'gemini' ? 'bg-orange-900/20 border-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.2)]' : 'bg-stone-800 border-stone-700 text-stone-400 hover:bg-stone-700'}`}
                 >
                    <span className="font-bold text-lg mb-1">Gemini</span>
                    <span className="text-xs opacity-70">Nativo de Google</span>
                 </button>
                 <button
                    onClick={() => setProvider('openrouter')}
-                   className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all ${provider === 'openrouter' ? 'bg-purple-600/20 border-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-gray-700/30 border-gray-600 text-gray-400 hover:bg-gray-700/50'}`}
+                   className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all ${provider === 'openrouter' ? 'bg-purple-900/20 border-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)]' : 'bg-stone-800 border-stone-700 text-stone-400 hover:bg-stone-700'}`}
                 >
                    <span className="font-bold text-lg mb-1">OpenRouter</span>
-                   <span className="text-xs opacity-70">Modelos Gratuitos (Llama, Mistral...)</span>
+                   <span className="text-xs opacity-70">Modelos Gratuitos (Llama, etc)</span>
                 </button>
              </div>
           </div>
@@ -93,11 +94,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
           {/* Settings for Gemini */}
           {provider === 'gemini' && (
              <div className="space-y-4 animate-fade-in-up">
-                {/* API Key Input */}
                 <div className="space-y-2">
                    <div className="flex justify-between items-center">
-                      <label className="text-sm font-semibold text-gray-300">Google AI Studio API Key (Opcional)</label>
-                      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-400 hover:text-indigo-300 underline">
+                      <label className="text-sm font-semibold text-stone-300">Google AI Studio API Key (Opcional)</label>
+                      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-xs text-orange-400 hover:text-orange-300 underline">
                          Obtener Key
                       </a>
                    </div>
@@ -107,26 +107,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
                          value={geminiApiKey}
                          onChange={(e) => setGeminiApiKey(e.target.value)}
                          placeholder="Dejar vacío para usar la predeterminada"
-                         className="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none pr-10"
+                         className="w-full bg-stone-950/50 border border-stone-700 rounded-lg px-4 py-3 text-sm text-stone-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none pr-10 placeholder-stone-600"
                       />
                       <button 
                          type="button"
                          onClick={() => setShowKey(!showKey)}
-                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                         className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-white"
                       >
-                         {showKey ? (
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                           </svg>
-                         ) : (
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                           </svg>
-                         )}
+                         {showKey ? "Ocultar" : "Mostrar"}
                       </button>
                    </div>
-                   <p className="text-xs text-gray-500">Si dejas esto vacío, usaremos nuestra API Key compartida (sujeta a límites).</p>
+                   <p className="text-xs text-stone-500">Si dejas esto vacío, usaremos nuestra API Key compartida.</p>
                 </div>
              </div>
           )}
@@ -134,12 +125,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
           {/* Settings for OpenRouter */}
           {provider === 'openrouter' && (
              <div className="space-y-4 animate-fade-in-up">
-                
-                {/* API Key Input */}
                 <div className="space-y-2">
                    <div className="flex justify-between items-center">
-                      <label className="text-sm font-semibold text-gray-300">OpenRouter API Key</label>
-                      <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-400 hover:text-indigo-300 underline">
+                      <label className="text-sm font-semibold text-stone-300">OpenRouter API Key</label>
+                      <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-orange-400 hover:text-orange-300 underline">
                          Obtener Key
                       </a>
                    </div>
@@ -149,35 +138,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
                          value={openRouterApiKey}
                          onChange={(e) => setOpenRouterApiKey(e.target.value)}
                          placeholder="sk-or-v1-..."
-                         className="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-sm text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none pr-10"
+                         className="w-full bg-stone-950/50 border border-stone-700 rounded-lg px-4 py-3 text-sm text-stone-200 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none pr-10 placeholder-stone-600"
                       />
                       <button 
                          type="button"
                          onClick={() => setShowKey(!showKey)}
-                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                         className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-white"
                       >
-                         {showKey ? (
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                           </svg>
-                         ) : (
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                           </svg>
-                         )}
+                         {showKey ? "Ocultar" : "Mostrar"}
                       </button>
                    </div>
-                   
-                   {/* Guide */}
-                   <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-3 text-xs text-gray-400">
-                      <p className="font-bold text-purple-300 mb-1">¿Cómo configurar?</p>
-                      <ol className="list-decimal pl-4 space-y-1">
-                         <li>Ve a <a href="https://openrouter.ai/" target="_blank" className="text-indigo-400 underline">OpenRouter.ai</a> y crea una cuenta.</li>
-                         <li>Ve a la sección "Keys" y crea una nueva key.</li>
-                         <li>Copia la key (empieza por sk-or-...) y pégala arriba.</li>
-                         <li>¡Listo! Podrás usar modelos potentes gratis.</li>
-                      </ol>
+
+                   {/* Usage Limit Warning */}
+                   <div className="bg-blue-900/10 border border-blue-700/30 rounded-lg p-3 mt-3 flex items-start gap-3">
+                      <div className="text-blue-500 mt-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                          <h4 className="text-blue-400 font-bold text-xs uppercase mb-1">Límites de Uso Gratuito</h4>
+                          <p className="text-xs text-stone-400">
+                            Ten en cuenta que OpenRouter limita las cuentas gratuitas a aproximadamente <span className="text-stone-200 font-bold">50 generaciones por día</span>.
+                          </p>
+                      </div>
+                   </div>
+
+                   <div className="bg-yellow-900/10 border border-yellow-700/30 rounded-lg p-3 mt-3">
+                      <h4 className="text-yellow-500 font-bold text-xs uppercase mb-1">¿Error de Privacidad?</h4>
+                      <p className="text-xs text-stone-400">
+                        Si usas modelos gratuitos en OpenRouter, asegúrate de habilitar el "Data Logging" en tu <a href="https://openrouter.ai/settings/privacy" target="_blank" className="text-yellow-400 underline">Privacidad</a>.
+                      </p>
                    </div>
                 </div>
              </div>
@@ -185,12 +176,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
 
           {/* Model Selection */}
           <div className="space-y-3">
-             <label className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Modelo de Lenguaje</label>
+             <label className="text-xs font-bold text-stone-400 uppercase tracking-widest">Modelo de Lenguaje</label>
              <div className="relative">
                 <select
                    value={modelId}
                    onChange={(e) => setModelId(e.target.value)}
-                   className="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                   className="w-full bg-stone-950/50 border border-stone-700 rounded-lg px-4 py-3 text-sm text-stone-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none appearance-none cursor-pointer hover:bg-stone-900"
                 >
                    {filteredModels.map(model => (
                       <option key={model.id} value={model.id}>
@@ -199,34 +190,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ currentSettings, onSave, 
                    ))}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                    </svg>
                 </div>
              </div>
-             <p className="text-xs text-gray-500">
-                {provider === 'openrouter' 
-                   ? 'Nota: Los modelos gratuitos pueden tener colas de espera o límites de velocidad.' 
-                   : 'El modelo nativo ofrece la mejor integración sin configuración extra.'}
-             </p>
           </div>
 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-700 bg-gray-800/50 flex justify-end gap-3">
+        <div className="p-6 border-t border-stone-800 bg-stone-900/50 flex justify-end gap-3">
           <button
              onClick={onClose}
-             className="px-5 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-700 transition-colors"
+             className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-400 hover:bg-stone-800 transition-colors"
           >
              Cancelar
           </button>
           <button
              onClick={handleSave}
              disabled={provider === 'openrouter' && !openRouterApiKey}
-             className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-900/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+             className="px-6 py-2.5 rounded-lg text-sm font-bold bg-orange-600 text-white hover:bg-orange-500 shadow-lg shadow-orange-900/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-             Guardar Cambios
+             Guardar Configuración
           </button>
         </div>
       </div>
