@@ -385,7 +385,7 @@ const MainContent: React.FC = () => {
             </main>
             
             <footer className="relative z-10 max-w-4xl mx-auto px-4 py-8 text-center text-stone-500 text-sm border-t border-white/5 mt-12 mb-4">
-                <p className="font-medium text-stone-400">© 2024 ColorMix Atelier.</p>
+                <p className="font-medium text-stone-400">© 2026 ColorMix Atelier.</p>
                 <p className="mt-2 text-xs opacity-60">Compatible con Vallejo, Citadel, Army Painter y óleos digitales.</p>
             </footer>
 
