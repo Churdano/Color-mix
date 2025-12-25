@@ -32,83 +32,69 @@ const buildUserPrompt = (targetHex, userInventory) => {
 };
 
 const callOpenRouter = async (apiKey, model, prompt) => {
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: SYSTEM_PROMPT },
-                    { role: "user", content: prompt }
-                ],
-                response_format: { type: "json_object" } 
-            })
-        });
-        if (!response.ok) {
-            const err = await response.json();
-            const errorMessage = err.error?.message || `OpenRouter Error: ${response.statusText}`;
-            if (errorMessage.includes("data policy") || errorMessage.includes("matching your data policy")) {
-                throw new Error("ERROR DE PRIVACIDAD: Los modelos gratuitos requieren habilitar el registro de datos en OpenRouter. Revisa la Configuración.");
-            }
-            throw new Error(errorMessage);
-        }
-        const data = await response.json();
-        return data.choices[0]?.message?.content || "";
-    } catch (error) {
-        if (error.message.includes("ERROR DE PRIVACIDAD")) throw error;
-        throw new Error(error.message || "Error conectando con OpenRouter");
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: prompt }
+            ],
+            response_format: { type: "json_object" } 
+        })
+    });
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || `Error OpenRouter: ${response.statusText}`);
     }
+    const data = await response.json();
+    return data.choices[0]?.message?.content || "";
 };
 
 const callGemini = async (model, userPrompt, customApiKey) => {
-    try {
-        const client = customApiKey ? new GoogleGenAI({ apiKey: customApiKey }) : defaultGeminiAi;
-        const response = await client.models.generateContent({
-            model: model, 
-            contents: userPrompt,
-            config: {
-                systemInstruction: SYSTEM_PROMPT,
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: Type.OBJECT,
-                  properties: {
-                    resultColorHex: { type: Type.STRING },
-                    matchAccuracy: { type: Type.NUMBER },
-                    instructions: { type: Type.STRING },
-                    items: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          paintName: { type: Type.STRING },
-                          brand: { type: Type.STRING },
-                          drops: { type: Type.NUMBER }
-                        },
-                        required: ["paintName", "brand", "drops"]
-                      }
-                    }
-                  },
-                  required: ["resultColorHex", "matchAccuracy", "instructions", "items"]
+    const client = customApiKey ? new GoogleGenAI({ apiKey: customApiKey }) : defaultGeminiAi;
+    const response = await client.models.generateContent({
+        model: model, 
+        contents: userPrompt,
+        config: {
+            systemInstruction: SYSTEM_PROMPT,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                resultColorHex: { type: Type.STRING },
+                matchAccuracy: { type: Type.NUMBER },
+                instructions: { type: Type.STRING },
+                items: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      paintName: { type: Type.STRING },
+                      brand: { type: Type.STRING },
+                      drops: { type: Type.NUMBER }
+                    },
+                    required: ["paintName", "brand", "drops"]
+                  }
                 }
+              },
+              required: ["resultColorHex", "matchAccuracy", "instructions", "items"]
             }
-        });
-        return response.text || "";
-    } catch (error) {
-        throw new Error(error.message || "Error conectando con Gemini");
-    }
+        }
+    });
+    return response.text || "";
 };
 
 export const generatePaintRecipe = async (targetHex, userInventory, settings) => {
   const provider = settings?.provider || 'gemini';
-  const modelId = settings?.modelId || 'gemini-2.5-flash';
+  const modelId = settings?.modelId || 'gemini-3-flash-preview';
   const userPrompt = buildUserPrompt(targetHex, userInventory);
   let jsonText = "";
   if (provider === 'openrouter') {
-      if (!settings?.openRouterApiKey) throw new Error("Falta la API Key de OpenRouter. Configúrala en Ajustes.");
       jsonText = await callOpenRouter(settings.openRouterApiKey, modelId, userPrompt);
   } else {
       jsonText = await callGemini(modelId, userPrompt, settings?.geminiApiKey);
@@ -118,6 +104,6 @@ export const generatePaintRecipe = async (targetHex, userInventory, settings) =>
       const data = JSON.parse(cleanJson);
       return { targetColorHex: targetHex, ...data };
   } catch (parseError) {
-      throw new Error("La IA generó una respuesta inválida. Intenta de nuevo o cambia de modelo.");
+      throw new Error("Respuesta inválida de la IA. Intenta de nuevo.");
   }
 };

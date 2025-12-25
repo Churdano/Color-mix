@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ColorPicker from './components/ColorPicker.js';
 import InventoryManager from './components/InventoryManager.js';
@@ -214,7 +213,6 @@ const MainContent = () => {
             ),
             React.createElement('button', { onClick: () => setShowHistory(true), className: "p-2 rounded-lg bg-white/5 hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/30 text-stone-400 hover:text-indigo-300 transition-all duration-300 relative" },
               React.createElement('svg', { className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
-                // Fixed syntax error: changed strokeLinejoin="round" to strokeLinejoin: "round"
                 React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" })
               ),
               currentUser.history?.length > 0 && React.createElement('span', { className: "absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full" })
@@ -287,5 +285,4 @@ const MainContent = () => {
   );
 };
 
-const App = () => React.createElement(MainContent, null);
-export default App;
+export default MainContent;
