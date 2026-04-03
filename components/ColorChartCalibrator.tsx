@@ -1,7 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Paint } from '../types';
-// @ts-ignore
-import * as pdfjsLib from 'pdfjs-dist';
 
 // Define worker URL explicitly to match the version in importmap
 const PDF_WORKER_URL = 'https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
@@ -54,13 +52,17 @@ const ColorChartCalibrator: React.FC<ColorChartCalibratorProps> = ({ paints, onU
 
   useEffect(() => {
     // Initialize PDF.js worker
-    try {
-        if (pdfjsLib.GlobalWorkerOptions) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+    const initPdfJs = async () => {
+        try {
+            const pdfjsLib = await import('pdfjs-dist');
+            if (pdfjsLib.GlobalWorkerOptions) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+            }
+        } catch (e) {
+            console.error("Error initializing PDF worker", e);
         }
-    } catch (e) {
-        console.error("Error initializing PDF worker", e);
-    }
+    };
+    initPdfJs();
   }, []);
 
   // --- Wheel Zoom Logic (Native Listener for passive: false) ---
@@ -260,6 +262,7 @@ const ColorChartCalibrator: React.FC<ColorChartCalibratorProps> = ({ paints, onU
   const handlePdfUpload = async (file: File) => {
     setIsProcessingPdf(true);
     try {
+        const pdfjsLib = await import('pdfjs-dist');
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;

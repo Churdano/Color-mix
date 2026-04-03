@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {userId} (matches auth.uid)
+    // Fields:
+    //   - uid: string (required, immutable, matches document ID)
+    //   - name: string (required)
+    //   - avatarColor: string
+    //   - createdAt: number (required, immutable)
+    //   - inventory: list
+    //   - settings: map
+    //   - history: list
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['uid', 'name', 'createdAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.createdAt is number &&
+             (!('avatarColor' in data) || data.avatarColor is string) &&
+             (!('inventory' in data) || data.inventory is list) &&
+             (!('settings' in data) || data.settings is map) &&
+             (!('history' in data) || data.history is list);
+    }
+
+    function isImmutableUnchanged() {
+      return request.resource.data.uid == resource.data.uid &&
+             request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser();
+      allow update: if isOwner(userId) && isValidUser() && isImmutableUnchanged();
+      allow delete: if isOwner(userId);
+    }
+  }
+}

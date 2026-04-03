@@ -4,6 +4,25 @@ import { Paint } from '../types';
 import { COMMON_PAINTS, BRANDS } from '../constants';
 import ColorChartCalibrator from './ColorChartCalibrator';
 
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 0, g: 0, b: 0 };
+};
+
+const colorDistance = (hex1: string, hex2: string) => {
+  const c1 = hexToRgb(hex1);
+  const c2 = hexToRgb(hex2);
+  return Math.sqrt(
+    Math.pow(c1.r - c2.r, 2) +
+    Math.pow(c1.g - c2.g, 2) +
+    Math.pow(c1.b - c2.b, 2)
+  );
+};
+
 interface InventoryManagerProps {
   inventory: Paint[];
   setInventory: React.Dispatch<React.SetStateAction<Paint[]>>;
@@ -11,7 +30,7 @@ interface InventoryManagerProps {
 
 const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInventory }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeBrandTab, setActiveBrandTab] = useState(BRANDS[0]);
+  const [activeBrandTab, setActiveBrandTab] = useState('Mi Paleta');
   const [searchQuery, setSearchQuery] = useState('');
   const [customName, setCustomName] = useState('');
   const [customHex, setCustomHex] = useState('#ffffff');
@@ -31,11 +50,38 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
     }
   };
 
+  const handleSwapSimilar = (paintToSwap: Paint) => {
+    if (!paintToSwap.hex) return;
+    
+    let closestPaint: Paint | null = null;
+    let minDistance = Infinity;
+
+    availablePaints.forEach(p => {
+      // Don't swap with itself or paints already in inventory
+      if (p.id === paintToSwap.id || inventory.some(invP => invP.id === p.id)) return;
+      if (!p.hex) return;
+
+      const dist = colorDistance(paintToSwap.hex, p.hex);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestPaint = p;
+      }
+    });
+
+    if (closestPaint) {
+      const newInventory = inventory.filter(p => p.id !== paintToSwap.id);
+      newInventory.push(closestPaint);
+      setInventory(newInventory);
+    } else {
+      alert("No se encontraron colores similares disponibles.");
+    }
+  };
+
   const addCustomPaint = () => {
     if (!customName.trim()) return;
     const newPaint: Paint = {
       id: `custom-${Date.now()}`,
-      brand: activeBrandTab,
+      brand: activeBrandTab === 'Mi Paleta' ? 'Custom' : activeBrandTab,
       name: customName,
       category: 'base',
       hex: customHex
@@ -81,6 +127,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
 
   // Group paints by brand and apply search filter
   const filteredPaints = useMemo(() => {
+    if (activeBrandTab === 'Mi Paleta') return [];
     return availablePaints.filter(p => {
         let isBrandMatch = false;
         if (activeBrandTab === 'Citadel') {
@@ -151,6 +198,19 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
           
           {/* Brand Tabs */}
           <div className="flex overflow-x-auto border-b border-white/5 scrollbar-hide bg-stone-900/40">
+            <button
+                type="button"
+                onClick={() => handleTabChange('Mi Paleta')}
+                className={`
+                    px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all relative focus:outline-none
+                    ${activeBrandTab === 'Mi Paleta' ? 'text-orange-100 bg-white/5' : 'text-stone-500 hover:text-stone-300 hover:bg-white/5'}
+                `}
+            >
+                Mi Paleta ({inventory.length})
+                {activeBrandTab === 'Mi Paleta' && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-500 to-red-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]"></span>
+                )}
+            </button>
             {BRANDS.map(brand => (
                 <button
                     key={brand}
@@ -171,7 +231,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
 
           <div className="p-6">
              {/* Calibration Mode Toggle */}
-             {activeBrandTab !== 'Other' && !isCalibrating && (
+             {activeBrandTab !== 'Other' && activeBrandTab !== 'Mi Paleta' && !isCalibrating && (
                 <div className="mb-6 flex justify-end">
                     <button 
                         onClick={() => setIsCalibrating(true)}
@@ -192,8 +252,72 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                     onClose={() => setIsCalibrating(false)}
                     brandName={activeBrandTab}
                  />
+             ) : activeBrandTab === 'Mi Paleta' ? (
+                 <div className="space-y-4 animate-fade-in">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-stone-200">Pigmentos Seleccionados</h3>
+                        {inventory.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleClearClick}
+                                className="text-xs text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider font-bold"
+                            >
+                                Vaciar Paleta
+                            </button>
+                        )}
+                    </div>
+                    
+                    {confirmingClear && (
+                        <div className="flex items-center space-x-3 p-3 bg-red-900/20 rounded-xl border border-red-500/20 mb-4">
+                            <span className="text-sm text-red-300 font-medium">¿Estás seguro de borrar toda tu paleta?</span>
+                            <button onClick={confirmClear} className="px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-500 text-xs font-bold transition-colors">Sí, borrar</button>
+                            <button onClick={cancelClear} className="px-3 py-1.5 rounded-lg bg-stone-700 text-stone-300 hover:bg-stone-600 text-xs font-medium transition-colors">Cancelar</button>
+                        </div>
+                    )}
+
+                    {inventory.length === 0 ? (
+                        <div className="text-center py-10 bg-stone-900/30 rounded-xl border border-white/5 border-dashed">
+                            <p className="text-stone-500 text-sm">Tu paleta está vacía.</p>
+                            <p className="text-stone-600 text-xs mt-1">Selecciona una marca arriba para añadir pigmentos.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            {inventory.map(paint => (
+                                <div key={paint.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-800/50 border border-white/5 hover:border-white/10 transition-colors group">
+                                    <div className="flex items-center space-x-3 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-full border-2 border-stone-700 flex-shrink-0" style={{backgroundColor: paint.hex || '#ccc'}}></div>
+                                        <div className="truncate">
+                                            <p className="text-sm font-bold text-stone-200 truncate">{paint.name}</p>
+                                            <p className="text-xs text-stone-500 truncate">{paint.brand} • {paint.id}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <button 
+                                            onClick={() => handleSwapSimilar(paint)}
+                                            className="p-2 rounded-lg bg-stone-700 hover:bg-indigo-600 text-stone-300 hover:text-white transition-colors"
+                                            title="Cambiar por color similar"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                        </button>
+                                        <button 
+                                            onClick={() => togglePaint(paint)}
+                                            className="p-2 rounded-lg bg-stone-700 hover:bg-red-600 text-stone-300 hover:text-white transition-colors"
+                                            title="Eliminar de la paleta"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                 </div>
              ) : (
-                <>
+                 <>
                     {/* Toolbar: Search & Clear Actions */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         {/* Search Input */}
@@ -352,7 +476,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                             </button>
                         </div>
                     </div>
-                </>
+                 </>
              )}
 
           </div>

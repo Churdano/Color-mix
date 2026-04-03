@@ -2,8 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MixingRecipe, Paint, UserSettings } from "../types";
 
-// Initialize Default Gemini Client
-const defaultGeminiAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization of Gemini Client
+let defaultGeminiAi: GoogleGenAI | null = null;
+
+const getGeminiClient = (customApiKey?: string) => {
+    if (customApiKey) {
+        return new GoogleGenAI({ apiKey: customApiKey });
+    }
+    if (!defaultGeminiAi) {
+        const apiKey = process.env.API_KEY;
+        if (!apiKey || apiKey === "undefined") {
+            throw new Error("GEMINI_API_KEY no configurada. Por favor, revisa los ajustes del proyecto.");
+        }
+        defaultGeminiAi = new GoogleGenAI({ apiKey });
+    }
+    return defaultGeminiAi;
+};
 
 const SYSTEM_PROMPT = `
 Actúa como un pintor de miniaturas profesional experto en teoría del color.
@@ -29,7 +43,8 @@ const buildUserPrompt = (targetHex: string, userInventory: Paint[]) => {
       "instructions": "breve consejo de mezcla en español",
       "items": [
         { "paintName": "Nombre", "brand": "Marca", "drops": número }
-      ]
+      ],
+      "suggestions": ["Nombre de pintura 1", "Nombre de pintura 2"] // Opcional. Solo si matchAccuracy <= 80, sugiere 1 o 2 pinturas del mercado (Citadel, Vallejo, etc.) que se acerquen más al color objetivo.
     }
     `;
 };
@@ -84,9 +99,7 @@ const callOpenRouter = async (apiKey: string, model: string, prompt: string): Pr
 // Gemini SDK Helper
 const callGemini = async (model: string, userPrompt: string, customApiKey?: string): Promise<string> => {
     try {
-        // Use custom client if user provided key, otherwise default
-        const client = customApiKey ? new GoogleGenAI({ apiKey: customApiKey }) : defaultGeminiAi;
-
+        const client = getGeminiClient(customApiKey);
         const response = await client.models.generateContent({
             model: model, 
             contents: userPrompt,
@@ -110,6 +123,11 @@ const callGemini = async (model: string, userPrompt: string, customApiKey?: stri
                         },
                         required: ["paintName", "brand", "drops"]
                       }
+                    },
+                    suggestions: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "Suggested paints to buy if match accuracy is <= 80"
                     }
                   },
                   required: ["resultColorHex", "matchAccuracy", "instructions", "items"]

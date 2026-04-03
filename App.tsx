@@ -6,14 +6,16 @@ import RecipeDisplay from './components/RecipeDisplay';
 import UserSelector from './components/UserSelector';
 import SettingsModal from './components/SettingsModal';
 import HistorySidebar from './components/HistorySidebar';
+import ErrorBoundary from './components/ErrorBoundary';
+import GuideModal from './components/GuideModal';
+import FAQModal from './components/FAQModal';
 import { generatePaintRecipe } from './services/geminiService';
 import { Paint, PixelColor, MixingRecipe, UserProfile, UserSettings, RecipeHistoryItem } from './types';
 import { COMMON_PAINTS, AI_MODELS } from './constants';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
-const LOCAL_STORAGE_KEY = 'colormix_users_v1';
-
-// URL de la imagen de fondo (Usamos un placeholder de Unsplash que imita la foto subida: pinceles, óleos, madera)
-// Si el usuario tiene la foto local, debería reemplazar esto por 'background.jpg' si está en public.
 const BACKGROUND_IMAGE_URL = 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2071&auto=format&fit=crop';
 
 const generateRandomColor = () => {
@@ -21,10 +23,62 @@ const generateRandomColor = () => {
     return colors[Math.floor(Math.random() * colors.length)];
 };
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string;
+    email?: string | null;
+    emailVerified?: boolean;
+    isAnonymous?: boolean;
+    tenantId?: string | null;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 const MainContent: React.FC = () => {
-  // Global App State
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [authUid, setAuthUid] = useState<string | null>(null);
   
   // Session State
   const [targetColor, setTargetColor] = useState<PixelColor | null>(null);
@@ -35,94 +89,130 @@ const MainContent: React.FC = () => {
   // UI State
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
 
-  // Load users on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsGuest(false);
+        setAuthUid(user.uid);
+        const userRef = doc(db, 'users', user.uid);
         try {
-            const parsedUsers: UserProfile[] = JSON.parse(stored);
-            // Migration check: Ensure history array exists for old users
-            const migratedUsers = parsedUsers.map(u => ({
-                ...u,
-                history: u.history || [] 
-            }));
-            setUsers(migratedUsers);
-        } catch (e) {
-            console.error("Failed to parse users", e);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            const newUser: UserProfile = {
+              id: user.uid,
+              uid: user.uid,
+              name: user.displayName || 'Artista',
+              inventory: COMMON_PAINTS.slice(0, 5),
+              avatarColor: generateRandomColor(),
+              createdAt: Date.now(),
+              settings: {
+                provider: 'gemini',
+                modelId: 'gemini-2.5-flash'
+              },
+              history: []
+            };
+            await setDoc(userRef, newUser);
+          }
+        } catch (err) {
+          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
         }
-    }
+        setIsAuthReady(true);
+      } else {
+        setAuthUid(null);
+        setCurrentUser(prev => prev?.id === 'guest' ? prev : null);
+        setIsAuthReady(true);
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
-  // Save users whenever they change
   useEffect(() => {
-    if (users.length > 0) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(users));
+    if (isAuthReady && authUid && !isGuest) {
+      const userRef = doc(db, 'users', authUid);
+      const unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as UserProfile;
+          setCurrentUser({
+            ...data,
+            history: data.history || [],
+            inventory: data.inventory || [],
+            settings: data.settings || { provider: 'gemini', modelId: 'gemini-2.5-flash' }
+          });
+        }
+      }, (err: any) => {
+        if (err?.code === 'permission-denied' && !auth.currentUser) {
+          // Ignore permission denied errors that happen during logout
+          return;
+        }
+        handleFirestoreError(err, OperationType.GET, `users/${authUid}`);
+      });
+      return () => unsubscribeSnapshot();
     }
-  }, [users]);
+  }, [isAuthReady, authUid, isGuest]);
 
-  // Wrapper to update inventory for the CURRENT user
+  const handleGuestLogin = () => {
+    setIsGuest(true);
+    setCurrentUser({
+      id: 'guest',
+      uid: 'guest',
+      name: 'Invitado',
+      inventory: COMMON_PAINTS.slice(0, 5),
+      avatarColor: '#888888',
+      createdAt: Date.now(),
+      settings: { provider: 'gemini', modelId: 'gemini-2.5-flash' },
+      history: []
+    });
+  };
+
+  const updateUserInFirestore = async (updates: Partial<UserProfile>) => {
+    if (!currentUser) return;
+    if (isGuest || currentUser.id === 'guest') {
+      setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
+      return;
+    }
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const cleanUpdates = JSON.parse(JSON.stringify(updates));
+      await setDoc(userRef, cleanUpdates, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${currentUser.uid}`);
+    }
+  };
+
   const setUserInventory = (newInventoryAction: React.SetStateAction<Paint[]>) => {
       if (!currentUser) return;
-
       let newInventory: Paint[];
       if (typeof newInventoryAction === 'function') {
           newInventory = newInventoryAction(currentUser.inventory);
       } else {
           newInventory = newInventoryAction;
       }
-
-      const updatedUser = { ...currentUser, inventory: newInventory };
-      setCurrentUser(updatedUser);
-      setUsers(prevUsers => prevUsers.map(u => u.id === currentUser.id ? updatedUser : u));
+      updateUserInFirestore({ inventory: newInventory });
   };
 
   const handleUpdateSettings = (newSettings: UserSettings) => {
       if (!currentUser) return;
-      const updatedUser = { ...currentUser, settings: newSettings };
-      setCurrentUser(updatedUser);
-      setUsers(prevUsers => prevUsers.map(u => u.id === currentUser.id ? updatedUser : u));
+      updateUserInFirestore({ settings: newSettings });
   };
 
-  const handleCreateUser = (name: string) => {
-      const newUser: UserProfile = {
-          id: Date.now().toString(),
-          name,
-          inventory: COMMON_PAINTS.slice(0, 5), // Default starter kit
-          avatarColor: generateRandomColor(),
-          createdAt: Date.now(),
-          settings: {
-              provider: 'gemini',
-              modelId: 'gemini-2.5-flash'
-          },
-          history: []
-      };
-      const updatedUsers = [...users, newUser];
-      setUsers(updatedUsers);
-      setCurrentUser(newUser);
-  };
-
-  const handleDeleteUser = (userId: string) => {
-      const updated = users.filter(u => u.id !== userId);
-      setUsers(updated);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-  };
-
-  const handleLogin = (user: UserProfile) => {
-      // Ensure history is initialized
-      const safeUser = { ...user, history: user.history || [] };
-      setCurrentUser(safeUser);
-      setTargetColor(null);
-      setRecipe(null);
-      setError(null);
-  };
-
-  const handleLogout = () => {
-      setCurrentUser(null);
-      setTargetColor(null);
-      setRecipe(null);
-      setShowSettings(false);
-      setShowHistory(false);
+  const handleLogout = async () => {
+      try {
+        if (!isGuest) {
+          await signOut(auth);
+        }
+        setIsGuest(false);
+        setCurrentUser(null);
+        setTargetColor(null);
+        setRecipe(null);
+        setShowSettings(false);
+        setShowHistory(false);
+      } catch (error) {
+        console.error("Error logging out:", error);
+      }
   };
 
   const handleColorSelect = (color: PixelColor) => {
@@ -149,19 +239,15 @@ const MainContent: React.FC = () => {
       );
       setRecipe(result);
 
-      // Auto-save to history
       const newHistoryItem: RecipeHistoryItem = {
           id: Date.now().toString(),
           timestamp: Date.now(),
           recipe: result
       };
 
-      const updatedUser = {
-          ...currentUser,
+      await updateUserInFirestore({
           history: [newHistoryItem, ...(currentUser.history || [])]
-      };
-      setCurrentUser(updatedUser);
-      setUsers(prevUsers => prevUsers.map(u => u.id === currentUser.id ? updatedUser : u));
+      });
 
     } catch (err: any) {
       setError(err.message || "Error al conectar con el servicio de IA.");
@@ -173,18 +259,14 @@ const MainContent: React.FC = () => {
   const handleDeleteHistoryItem = (id: string) => {
       if (!currentUser) return;
       const updatedHistory = currentUser.history.filter(item => item.id !== id);
-      const updatedUser = { ...currentUser, history: updatedHistory };
-      setCurrentUser(updatedUser);
-      setUsers(prevUsers => prevUsers.map(u => u.id === currentUser.id ? updatedUser : u));
+      updateUserInFirestore({ history: updatedHistory });
   };
 
   const handleLoadHistoryItem = (recipeToLoad: MixingRecipe) => {
       setRecipe(recipeToLoad);
-      // Construct a fake target color object just for visualization if needed, 
-      // though RecipeDisplay uses the recipe's stored hex.
       setTargetColor({
           hex: recipeToLoad.targetColorHex,
-          r: 0, g: 0, b: 0, x: 0, y: 0 // Dummy coords
+          r: 0, g: 0, b: 0, x: 0, y: 0
       });
   };
 
@@ -194,24 +276,27 @@ const MainContent: React.FC = () => {
       return model ? model.name : currentUser.settings.modelId;
   };
 
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-950">
+        <div className="animate-spin h-10 w-10 border-4 border-orange-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative overflow-x-hidden pb-20 font-sans selection:bg-orange-500/30">
       
       {/* Background Image with Overlay */}
       <div className="fixed inset-0 z-0">
-          {/* Base Image */}
           <div 
             className="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] hover:scale-105"
             style={{ backgroundImage: `url(${BACKGROUND_IMAGE_URL})` }}
           ></div>
-          {/* Blur & Darkening Overlay to ensure text readability */}
           <div className="absolute inset-0 bg-stone-950/80 backdrop-blur-sm"></div>
-          
-          {/* Vignette effect */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]"></div>
       </div>
 
-      {/* Decorative Lights/Glows matching the photo's colors */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-600/20 rounded-full blur-[100px] animate-pulse-slow"></div>
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-600/10 rounded-full blur-[100px] animate-pulse-slow" style={{animationDelay: '1s'}}></div>
@@ -219,16 +304,10 @@ const MainContent: React.FC = () => {
 
       {!currentUser ? (
           <div className="relative z-10 pt-20">
-              <UserSelector 
-                users={users} 
-                onSelectUser={handleLogin} 
-                onCreateUser={handleCreateUser}
-                onDeleteUser={handleDeleteUser}
-              />
+              <UserSelector onLoginSuccess={() => {}} onGuestLogin={handleGuestLogin} />
           </div>
       ) : (
         <>
-            {/* Header */}
             <header className="glass-panel sticky top-4 mx-4 md:mx-auto max-w-5xl z-50 rounded-2xl animate-fade-in-up mt-4">
                 <div className="px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center space-x-3 group cursor-default">
@@ -262,6 +341,26 @@ const MainContent: React.FC = () => {
                          
                          <div className="h-6 w-px bg-stone-700 mx-1 hidden md:block"></div>
                         
+                        <button 
+                            onClick={() => setShowGuide(true)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 text-stone-400 hover:text-emerald-400 transition-all duration-300"
+                            title="Guía Rápida"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+
+                        <button 
+                            onClick={() => setShowFAQ(true)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/30 text-stone-400 hover:text-blue-400 transition-all duration-300"
+                            title="Preguntas Frecuentes"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+
                         <button 
                             onClick={() => setShowHistory(true)}
                             className="p-2 rounded-lg bg-white/5 hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/30 text-stone-400 hover:text-indigo-300 transition-all duration-300 relative"
@@ -301,7 +400,23 @@ const MainContent: React.FC = () => {
 
             <main className="relative z-10 max-w-4xl mx-auto px-4 py-10 space-y-8">
                 
-                {/* Intro Text */}
+                {isGuest && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between animate-fade-in-up">
+                    <div className="flex items-center space-x-3 mb-3 sm:mb-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-orange-200 text-sm font-medium">Estás probando la app como invitado. Tu progreso, colores e historial no se guardarán.</span>
+                    </div>
+                    <button 
+                      onClick={handleLogout} 
+                      className="whitespace-nowrap px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-orange-900/20"
+                    >
+                      Iniciar Sesión
+                    </button>
+                  </div>
+                )}
+
                 <div className="text-center space-y-2 mb-8 animate-fade-in-up">
                     <h2 className="text-3xl md:text-5xl font-bold text-stone-100 tracking-tight drop-shadow-xl">
                         Mesa de Trabajo
@@ -311,17 +426,14 @@ const MainContent: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Step 1: Inventory */}
                 <section className="animate-fade-in-up transition-transform hover:scale-[1.01] duration-500" style={{animationDelay: '0.1s'}}>
                     <InventoryManager inventory={currentUser.inventory} setInventory={setUserInventory} />
                 </section>
 
-                {/* Step 2: Image & Color */}
                 <section className="animate-fade-in-up transition-transform hover:scale-[1.01] duration-500" style={{animationDelay: '0.2s'}}>
                     <ColorPicker onColorSelect={handleColorSelect} />
                 </section>
 
-                {/* Action Button */}
                 <section className="flex justify-center sticky bottom-6 z-40 pointer-events-none animate-fade-in-up" style={{animationDelay: '0.3s'}}>
                     <button
                         onClick={handleGenerateRecipe}
@@ -357,7 +469,6 @@ const MainContent: React.FC = () => {
                     </button>
                 </section>
 
-                {/* Error Message */}
                 {error && (
                     <div className="animate-fade-in-up glass-panel border-l-4 border-l-red-500 text-red-100 p-4 rounded-r-xl shadow-lg relative" role="alert">
                         <div className="flex items-center">
@@ -369,7 +480,6 @@ const MainContent: React.FC = () => {
                     </div>
                 )}
 
-                {/* Step 3: Result */}
                 <section ref={(el) => {
                     if (recipe && el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -385,11 +495,27 @@ const MainContent: React.FC = () => {
             </main>
             
             <footer className="relative z-10 max-w-4xl mx-auto px-4 py-8 text-center text-stone-500 text-sm border-t border-white/5 mt-12 mb-4">
-                <p className="font-medium text-stone-400">© 2026 ColorMix Atelier.</p>
-                <p className="mt-2 text-xs opacity-60">Compatible con Vallejo, Citadel, Army Painter y óleos digitales.</p>
+                <div className="flex flex-col items-center justify-center space-y-4">
+                    <div>
+                        <p className="font-medium text-stone-400">© 2026 ColorMix Atelier.</p>
+                        <p className="mt-1 text-xs opacity-60">Compatible con Vallejo, Citadel, Army Painter y óleos digitales.</p>
+                    </div>
+                    <a 
+                        href="https://www.instagram.com/printxyz_3d/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center space-x-2 text-stone-400 hover:text-pink-500 transition-colors bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:border-pink-500/30"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                        <span className="font-medium tracking-wide">@printxyz_3d</span>
+                    </a>
+                </div>
             </footer>
 
-            {/* Settings Modal */}
             {showSettings && (
                 <SettingsModal 
                     currentSettings={currentUser.settings}
@@ -398,7 +524,14 @@ const MainContent: React.FC = () => {
                 />
             )}
 
-            {/* History Sidebar */}
+            {showGuide && (
+                <GuideModal onClose={() => setShowGuide(false)} />
+            )}
+
+            {showFAQ && (
+                <FAQModal onClose={() => setShowFAQ(false)} />
+            )}
+
             <HistorySidebar 
                 isOpen={showHistory}
                 onClose={() => setShowHistory(false)}
@@ -414,7 +547,9 @@ const MainContent: React.FC = () => {
 
 const App: React.FC = () => {
     return (
-        <MainContent />
+        <ErrorBoundary>
+            <MainContent />
+        </ErrorBoundary>
     )
 };
 

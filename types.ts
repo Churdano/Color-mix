@@ -20,6 +20,7 @@ export interface MixingRecipe {
   items: RecipeItem[];
   instructions: string;
   matchAccuracy: number; // 0-100%
+  suggestions?: string[]; // Suggested paints to buy if match accuracy is low
 }
 
 export interface RecipeHistoryItem {
@@ -46,6 +47,7 @@ export interface UserSettings {
 
 export interface UserProfile {
   id: string;
+  uid: string;
   name: string;
   inventory: Paint[];
   avatarColor: string; // Hex string for the avatar background
