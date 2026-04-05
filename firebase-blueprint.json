@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile containing settings, inventory, and history",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "avatarColor": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "inventory": { "type": "array" },
+        "settings": { "type": "object" },
+        "history": { "type": "array" }
+      },
+      "required": ["uid", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles, inventory, and history"
+    }
+  }
+}

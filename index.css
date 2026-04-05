@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-stone-850: #1c1917;
+  --color-stone-950: #0c0a09;
+  
+  --color-art-red: #D93838;
+  --color-art-yellow: #F2C029;
+  --color-art-blue: #2B5BA6;
+  --color-art-wood: #8C6A4B;
+  
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pulse-glow: pulse-glow 3s infinite;
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.1); }
+    50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-stone-950 text-stone-100 antialiased overflow-x-hidden;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1c1917; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #57534e; 
+    border-radius: 4px;
+    border: 1px solid #1c1917;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a29e; 
+  }
+
+  ::selection {
+    background: #f97316;
+    color: white;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: rgba(28, 25, 23, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .glass-panel-light {
+    background: rgba(41, 37, 36, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
